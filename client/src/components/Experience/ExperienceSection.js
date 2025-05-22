@@ -93,10 +93,11 @@ const itemVariants = {
 const experienceData = [
   {
     role: 'Full Stack Developer',
-    company: 'Tech Solutions Inc.',
-    dates: 'Jan 2022 - Present',
+    company: 'Freelancer',
+    dates: 'March 2022 - Present',
     description: [
       'Developed and maintained web applications using React, Node.js, and Express.',
+      'Mostly Worked as a Freelancer Indipendently',
       'Collaborated with cross-functional teams to define, design, and ship new features.',
       'Implemented responsive UIs and ensured application scalability.',
     ],

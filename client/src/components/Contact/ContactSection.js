@@ -112,12 +112,11 @@ const ContactSection = () => {
 
       <SocialLinksContainer variants={itemVariants}>
         {/* Replace with your actual profile URLs */}
-        <a href="https://github.com/yourusername" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><FiGithub /></a>
-        <a href="https://linkedin.com/in/yourusername" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><FiLinkedin /></a>
-        <a href="https://wa.me/yourwhatsappnumber" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><FaWhatsapp /></a> {/* Use wa.me link */}
-        <a href="https://twitter.com/yourusername" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><FiTwitter /></a>
-        <a href="https://instagram.com/yourusername" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><FaInstagram /></a> {/* Add Instagram link */}
-        {/* Add more social links as needed */}
+        <a href="https://github.com/Muhammad-Nadeem-9911" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><FiGithub /></a>
+        <a href="https://linkedin.com/in/muhammad-nadeem-1169a4219" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><FiLinkedin /></a>
+        <a href="https://wa.me/+923404265067" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><FaWhatsapp /></a> {/* Use wa.me link */}
+        <a href="https://x.com/Ghumnaam72" target="_blank" rel="noopener noreferrer" aria-label="X"><FiTwitter /></a>
+        
       </SocialLinksContainer>
 
     </ContactSectionContainer>
