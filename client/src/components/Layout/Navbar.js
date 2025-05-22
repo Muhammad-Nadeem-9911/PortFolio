@@ -100,6 +100,7 @@ const MobileNavLinks = styled(motion.div)`
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  z-index: 1000; // Ensure it's above other content, same as NavContainer
   padding: 20px;
 
   a {

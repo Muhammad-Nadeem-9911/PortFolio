@@ -18,7 +18,8 @@ const HeroContainer = styled.section`
   @media (max-width: 768px) {
     align-items: center;
     text-align: center;
-    padding: 0 5%;
+    margin-top: 100px;
+    padding: 15% 5%;
   }
 
   @media (min-width: 992px) { /* Adjust breakpoint as needed */
