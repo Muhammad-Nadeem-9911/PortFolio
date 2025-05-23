@@ -29,8 +29,19 @@ const app = express();
 // Body parser
 app.use(express.json());
 
-// Enable CORS
-app.use(cors()); // Configure this properly for production
+// Enable CORS - Configure this properly for production
+const allowedOrigins = ['https://portfolio-1vs8.onrender.com']; // Add your frontend URL
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) { // Allow requests with no origin (like mobile apps or curl requests)
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+app.use(cors(corsOptions));
 
 // Mount routers
 app.use('/api/projects', projectRoutes); // This might handle both public GET and admin CRUD for projects
