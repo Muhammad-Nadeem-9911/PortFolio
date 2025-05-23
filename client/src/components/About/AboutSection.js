@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion'; // For animations
+import { getPublicAboutInfo } from '../../services/portfolioService'; // Import the service
 
 const AboutSectionContainer = styled(motion.section)`
   padding: 30px 20px 60px 20px; /* Decreased top padding, kept bottom padding */
@@ -42,7 +43,13 @@ const AboutContent = styled(motion.div)`
 
   p {
     margin-bottom: 20px;
-    color: ${props => props.theme.colors.secondaryAccent}; /* Slightly muted text for paragraphs */
+    color: ${props => props.theme.colors.text}; /* Use main text color for better visibility */
+    white-space: pre-line; /* Respect line breaks from textarea input */
+  }
+
+  /* Style for loading/error messages if needed */
+  .message {
+    text-align: center;
   }
 
   strong {
@@ -51,6 +58,11 @@ const AboutContent = styled(motion.div)`
   }
 `;
 
+const itemVariants = { // Define itemVariants if not already globally available
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+};
+
 // Animation variants
 const sectionVariants = {
   hidden: { opacity: 0, y: 50 },
@@ -58,6 +70,39 @@ const sectionVariants = {
 };
 
 const AboutSection = () => {
+  const [aboutData, setAboutData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchAboutData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getPublicAboutInfo(); // Fetches { greeting, name, taglineStrings, profileImageUrl, bio }
+        setAboutData(data);
+      } catch (err) {
+        console.error("Failed to fetch about info for AboutSection:", err);
+        setError(err.message || 'Could not load about information.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAboutData();
+  }, []);
+
+  if (loading) {
+    return (
+      <AboutSectionContainer id="about">
+        <SectionHeading>About Me</SectionHeading>
+        <AboutContent><p className="message">Loading about information...</p></AboutContent>
+      </AboutSectionContainer>
+    );
+  }
+
+  const bioContent = aboutData?.bio || "Detailed information about me is coming soon. Stay tuned!";
+  const displayError = error || (!aboutData && !loading && "About information is currently unavailable.");
+
   return (
     <AboutSectionContainer
       id="about" // For navigation
@@ -66,17 +111,12 @@ const AboutSection = () => {
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
     >
-      <SectionHeading>About Me</SectionHeading>
-      <AboutContent>
-        <p>
-          Hello! I'm Nadeem, a passionate and dedicated Full Stack Developer with a knack for creating elegant, efficient, and user-friendly web applications. My journey into the world of code started with a fascination for how websites worked, RealTime Online Class System Project, and I've been hooked ever since.
-        </p>
-        <p>
-          I thrive on turning complex problems into simple, beautiful, and intuitive designs. I have experience working with a range of technologies including <strong>React, Node.js, Express, and MongoDB</strong>, and I'm always eager to learn and adapt to new tools and frameworks. My goal is to build software that not only functions flawlessly but also provides a delightful experience for the end-user.
-        </p>
-        <p>
-          When I'm not coding, you can find me exploring new tech, Playing Cricket Or Watching Cricket. I believe in continuous learning and am always looking for opportunities to grow both personally and professionally.
-        </p>
+      <SectionHeading variants={itemVariants}>About Me</SectionHeading>
+      <AboutContent animate="visible"> {/* Add animate="visible" to trigger children animation */}
+        {displayError && !aboutData?.bio 
+          ? <motion.p className="message" style={{ color: 'red' }} variants={itemVariants}>{displayError}</motion.p>
+          : <motion.p variants={itemVariants}>{bioContent}</motion.p>
+        }
       </AboutContent>
     </AboutSectionContainer>
   );

@@ -1,6 +1,6 @@
 import './App.css';
 import styled, { ThemeProvider } from 'styled-components';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'; // Import routing components
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom'; // Import useLocation
 
 import ProjectsSection from './components/Projects/ProjectsSection'; // Uncomment this
 import HeroSection from './components/Hero/HeroSection'; // Uncomment this
@@ -14,11 +14,19 @@ import Footer from './components/Layout/Footer'; // Import Footer
 import theme from './styles/theme'; // Make sure this is imported
 
 // Import new admin components (will create these next)
-import LoginPage from './pages/LoginPage';
+import LoginPage from './pages/LoginPage'; // Changed to LoginPage, verify your actual filename
 import AdminProjectsPage from './pages/AdminProjectsPage';
-import ProjectFormPage from './pages/ProjectFormPage';
-import PrivateRoute from './components/routing/PrivateRoute'; // We'll create this
-
+import ProjectFormPage from './pages/ProjectFormPage'; // Reverted to likely original name
+import AdminAboutPage from './pages/AdminAboutPage'; // Import AdminAboutPage
+import AdminContactPage from './pages/AdminContactPage'; // Import AdminContactPage
+import AdminLayout from './components/Layout/AdminLayout'; // Import AdminLayout
+import PrivateRoute from './components/routing/PrivateRoute'; // Reverted to likely original name
+import AdminAddEditExperiencePage from './pages/AdminAddEditExperiencePage'; // Import the new page
+import AdminExperienceListPage from './pages/AdminExperienceListPage'; // Import AdminExperienceListPage
+import AdminSkillsPage from './pages/AdminSkillsPage'; // Import AdminSkillsPage
+import NotFoundPage from './pages/NotFoundPage'; // Import NotFoundPage
+import AdminAddEditSkillPage from './pages/AdminAddEditSkillPage'; // Import AdminAddEditSkillPage
+import { NotificationProvider } from './contexts/NotificationContext'; // Import NotificationProvider
 
 const AppContainer = styled.div`
   background-color: ${props => props.theme.colors.background}; /* Uncomment this */
@@ -28,14 +36,15 @@ const AppContainer = styled.div`
   /* padding-top: 50px; Adjust or remove as needed */
 `;
 
-function App() {
+// This new component will manage the layout based on the current route
+const AppContent = () => {
+  const location = useLocation();
+  // Show public navbar and footer if not an admin page and not the admin login page
+  const showPublicNavbarAndFooter = !location.pathname.startsWith('/admin') || location.pathname === '/admin'; // Show for /admin before redirect
+
   return (
-    <Router> {/* Wrap your app with Router */}
-      <ThemeProvider theme={theme}>
-        <GlobalStyles />
-        <Navbar /> {/* Add Navbar here, outside of specific page containers for fixed positioning */}
-        {/* AppContainer can wrap the Routes or be inside individual pages */}
-        {/* For simplicity, let's put it inside pages or use a layout component */}
+    <>
+      {showPublicNavbarAndFooter && <Navbar />}
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={
@@ -45,22 +54,60 @@ function App() {
               <SkillsSection /> {/* Add SkillsSection here */}
               <ExperienceSection /> {/* Add ExperienceSection here */}
               <ContactSection /> {/* Add ContactSection here */}
-              <ProjectsSection />
-              <Footer /> {/* Add Footer here */}
+              <ProjectsSection /> {/* Add ProjectsSection here */}
               {/* Add other public sections here */}
             </AppContainer>
           } />
           <Route path="/admin/login" element={<LoginPage />} />
 
-          {/* Private (Admin) Routes */}
-          {/* Use PrivateRoute to protect these */}
-          <Route path="/admin/projects" element={<PrivateRoute element={<AdminProjectsPage />} />} />
-          <Route path="/admin/projects/new" element={<PrivateRoute element={<ProjectFormPage />} />} />
-          <Route path="/admin/projects/:id/edit" element={<PrivateRoute element={<ProjectFormPage />} />} />
+          {/* Admin Routes - Wrapped by AdminLayout and PrivateRoute */}
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute>
+                <AdminLayout />
+              </PrivateRoute>
+            }
+          >
+            {/* Default admin page (e.g., projects or a dashboard) */}
+            <Route index element={<Navigate to="projects" replace />} /> {/* Redirect /admin to /admin/projects */}
+            <Route path="projects" element={<AdminProjectsPage />} />
+            <Route path="projects/new" element={<ProjectFormPage />} />
+            <Route path="projects/:id/edit" element={<ProjectFormPage />} />
+            <Route path="about" element={<AdminAboutPage />} />
+            <Route path="contact" element={<AdminContactPage />} />
+            <Route path="experiences" element={<AdminExperienceListPage />} />
+            <Route path="experiences/new" element={<AdminAddEditExperiencePage />} />
+            <Route path="experiences/:id/edit" element={<AdminAddEditExperiencePage />} />
+            <Route path="skills/:id/edit" element={<AdminAddEditSkillPage />} /> {/* Add edit skill route */}
+            <Route path="skills/new" element={<AdminAddEditSkillPage />} /> {/* Add new skill route */}
+            <Route path="skills" element={<AdminSkillsPage />} />
+            {/* Add other nested admin routes here as children of this /admin route */}
+          </Route>
+
+          {/* Catch-all for 404 Not Found */}
+          <Route path="*" element={
+            <AppContainer> {/* Optionally wrap with AppContainer or a specific Layout */}
+              <NotFoundPage />
+            </AppContainer>
+          } />
         </Routes>
+      {showPublicNavbarAndFooter && !location.pathname.startsWith('/admin/') && location.pathname !== '/admin/login' && <Footer />}
+    </>
+  );
+};
+
+function App() {
+  return (
+    <Router>
+      <ThemeProvider theme={theme}>
+        <NotificationProvider> {/* Moved NotificationProvider inside ThemeProvider */}
+          <GlobalStyles />
+          <AppContent /> {/* Use the AppContent component here */}
+        {/* NotificationContainer rendered by NotificationProvider will now have theme access */}
+        </NotificationProvider>
       </ThemeProvider>
     </Router>
   );
 }
-
 export default App;

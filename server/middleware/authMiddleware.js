@@ -14,12 +14,11 @@ const protect = async (req, res, next) => {
       }
       next();
     } catch (error) {
-      console.error(error);
       return res.status(401).json({ success: false, error: 'Not authorized, token failed' });
     }
   }
 
-  if (!token) {
+  if (!token && !(req.headers.authorization && req.headers.authorization.startsWith('Bearer'))) { // Ensure this condition is only met if the above block didn't run and set token
     return res.status(401).json({ success: false, error: 'Not authorized, no token' });
   }
 };

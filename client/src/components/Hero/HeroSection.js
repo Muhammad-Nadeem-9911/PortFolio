@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion'; // Import motion
 import Typewriter from 'typewriter-effect';
-import theme from '../../styles/theme'; // Import your theme object
+import { getPublicAboutInfo } from '../../services/portfolioService'; // Import the service
 
 const HeroContainer = styled.section`
   display: flex;
@@ -137,6 +137,52 @@ const orbitVariants = {
 };
 
 const HeroSection = () => {
+  const [aboutInfo, setAboutInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchAboutData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getPublicAboutInfo();
+        setAboutInfo(data);
+      } catch (err) {
+        setError(err.message || 'Could not load hero information.');
+        console.error("Failed to fetch about info:", err);
+        // Set default fallbacks if API fails and you want to show something
+        setAboutInfo({
+          greeting: 'Hi, my name is',
+          name: 'M~Nadeem',
+          taglineStrings: ["I build things for the web.", "I'm a Full Stack Developer."],
+          profileImageUrl: '/Profile.png'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAboutData();
+  }, []);
+
+  if (loading) {
+    return (
+      <HeroContainer id="hero">
+        <TextContent><Name>Loading...</Name></TextContent>
+      </HeroContainer>
+    );
+  }
+
+  // Use default/fallback data if aboutInfo is not fully populated after loading/error
+  const displayInfo = {
+    greeting: aboutInfo?.greeting || 'Hi, my name is',
+    name: aboutInfo?.name || 'M~Nadeem',
+    taglineStrings: aboutInfo?.taglineStrings && aboutInfo.taglineStrings.length > 0
+      ? aboutInfo.taglineStrings
+      : ["I build things for the web.", "I'm a Full Stack Developer."],
+    profileImageUrl: aboutInfo?.profileImageUrl || '/Profile.png'
+  };
+
   return (
     <HeroContainer id="hero">
       <TextContent
@@ -144,12 +190,13 @@ const HeroSection = () => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <Greeting>Hi, my name is</Greeting>
-        <Name>M~Nadeem</Name>
+        {error && <p style={{color: 'red'}}>Error: {error}</p>}
+        <Greeting>{displayInfo.greeting}</Greeting>
+        <Name>{displayInfo.name}</Name>
         <Tagline>
           <Typewriter
             options={{
-              strings: ["I build things for the web.", "I'm a Full Stack Developer.", "I love creating amazing user experiences."],
+              strings: displayInfo.taglineStrings,
               autoStart: true,
               loop: true,
               delay: 75,
@@ -157,8 +204,6 @@ const HeroSection = () => {
             }}
           />
         </Tagline>
-        {/* You can add a call to action button here */}
-        {/* <Button href="#projects">Check out my work!</Button> */}
       </TextContent>
 
       <ImageContainer
@@ -167,7 +212,7 @@ const HeroSection = () => {
         transition={{ duration: 0.8, ease: "easeOut", delay: 0.5 }} // Container animation timing
       >
         <OrbitingEffect variants={orbitVariants} initial="hidden" animate="visible" /> {/* The orbiting element */}
-        <StyledImage src="/Profile.png" alt="M~Nadeem" variants={imageVariants} initial="hidden" animate="visible" /> {/* The image */}
+        <StyledImage src={displayInfo.profileImageUrl} alt={displayInfo.name} variants={imageVariants} initial="hidden" animate="visible" /> {/* The image */}
       </ImageContainer>
     </HeroContainer>
   );

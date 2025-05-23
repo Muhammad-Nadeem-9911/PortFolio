@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Link, useNavigate } from 'react-router-dom';
-import { logoutUser } from '../services/authService';
 import { getAdminProjects, deleteAdminProject } from '../services/projectService';
+import { useNotification } from '../contexts/NotificationContext'; // Import the hook
 
 const AdminPageContainer = styled.div`
   padding: 20px;
@@ -17,11 +17,11 @@ const AdminPageContainer = styled.div`
   }
 `;
 
-const ControlsContainer = styled.div`
+const PageHeaderControls = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 30px; /* Keep margin for AddProjectLink */
 `;
 
 const StyledButton = styled.button`
@@ -100,11 +100,8 @@ const AdminProjectsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { addNotification } = useNotification(); // Use the hook
 
-  const handleLogout = () => {
-    logoutUser();
-    navigate('/admin/login');
-  };
   const fetchProjects = async () => {
     setLoading(true);
     setError(null);
@@ -113,6 +110,7 @@ const AdminProjectsPage = () => {
       setProjects(data);
     } catch (err) {
       setError(err.message || 'Failed to fetch projects.');
+      addNotification(err.message || 'Failed to fetch projects.', 'error');
     } finally {
       setLoading(false);
     }
@@ -127,9 +125,10 @@ const AdminProjectsPage = () => {
       try {
         await deleteAdminProject(id);
         setProjects(projects.filter(project => project._id !== id)); // Optimistically update UI
+        addNotification('Project deleted successfully!', 'success');
         // Or refetch: fetchProjects();
       } catch (err) {
-        alert('Failed to delete project: ' + (err.response?.data?.error || err.message));
+        addNotification(`Failed to delete project: ${err.response?.data?.error || err.message}`, 'error');
       }
     }
   };
@@ -140,10 +139,9 @@ const AdminProjectsPage = () => {
   return (
     <AdminPageContainer>
       <h1>Admin - Manage Projects</h1>
-      <ControlsContainer>
+      <PageHeaderControls> {/* Renamed for clarity, only contains AddProjectLink now */}
         <AddProjectLink to="/admin/projects/new">Add New Project</AddProjectLink>
-        <StyledButton onClick={handleLogout}>Logout</StyledButton>
-      </ControlsContainer>
+      </PageHeaderControls>
 
       {projects.length === 0 ? (
         <p>No projects found. Add your first project!</p>

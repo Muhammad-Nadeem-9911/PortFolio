@@ -11,13 +11,20 @@ const apiClient = axios.create({
 
 export const loginUser = async (username, password) => {
   try {
+    console.log('[authService] Attempting login with:', { username }); // Don't log password here in production
     const response = await apiClient.post('/auth/login', { username, password });
+    console.log('[authService] Login API response:', response);
     if (response.data && response.data.token) {
+      // Ensure 'authToken' is the key used by PrivateRoute and api.js interceptor
       localStorage.setItem('authToken', response.data.token);
+      console.log('[authService] Token stored in localStorage.');
+    } else {
+      console.warn('[authService] Token not found in response data:', response.data);
     }
     return response.data;
   } catch (error) {
-    console.error('Login API error:', error.response?.data?.error || error.message);
+    // Log the specific error structure from backend if available
+    console.error('[authService] Login API error:', error.response ? error.response.data : error.message, error);
     throw error;
   }
 };

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 // Example icons for social links (install react-icons)
 import { FiGithub, FiLinkedin, FiTwitter, FiMail } from 'react-icons/fi'; // Feather icons
 import { FaWhatsapp, FaInstagram } from 'react-icons/fa'; // Font Awesome icons
+import { getPublicContactInfo } from '../../services/portfolioService'; // Import the service
 
 const ContactSectionContainer = styled(motion.section)`
   padding: 60px 20px;
@@ -90,7 +91,73 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
 };
 
+// Helper to map platform name to an icon component
+const getSocialIcon = (platform) => {
+  switch (platform?.toLowerCase()) { // Added optional chaining for safety
+    case 'github':
+      return <FiGithub />;
+    case 'linkedin':
+      return <FiLinkedin />;
+    case 'whatsapp':
+      return <FaWhatsapp />;
+    case 'twitter': // or 'x'
+      return <FiTwitter />;
+    case 'instagram':
+      return <FaInstagram />;
+    case 'mail': // If you want a mail icon in social links too
+      return <FiMail />
+    default:
+      return null; // Or a default icon
+  }
+};
+
 const ContactSection = () => {
+  const [contactInfo, setContactInfo] = useState(null); // Initialize with null
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchContactData = async () => {
+      try {
+        setLoading(true);
+        setError(null); // Reset error on new fetch
+        const data = await getPublicContactInfo();
+        setContactInfo(data);
+      } catch (err) {
+        setError(err.message || 'Could not load contact information.');
+        console.error("Failed to fetch contact info:", err);
+        // Optionally, set default data here if API fails and you want fallbacks
+        // setContactInfo({
+        //   introText: "Default intro text on error.",
+        //   email: 'default@example.com',
+        //   socialLinks: []
+        // });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContactData();
+  }, []);
+
+  // Render loading state
+  if (loading) {
+    return (
+      <ContactSectionContainer id="contact" variants={sectionVariants} initial="hidden" animate="visible"><SectionHeading variants={itemVariants}>Loading...</SectionHeading></ContactSectionContainer>
+    );
+  }
+
+  // Handle error or no data after loading
+  if (error || !contactInfo) {
+    return (
+      <ContactSectionContainer id="contact" variants={sectionVariants} initial="hidden" animate="visible">
+        <SectionHeading variants={itemVariants}>Get In Touch</SectionHeading>
+        <ContactContent variants={itemVariants}>
+          <p>{error || "Contact information is currently unavailable. Please try again later."}</p>
+        </ContactContent>
+      </ContactSectionContainer>
+    );
+  }
   return (
     <ContactSectionContainer
       id="contact" // For navigation
@@ -101,23 +168,30 @@ const ContactSection = () => {
     >
       <SectionHeading variants={itemVariants}>Get In Touch</SectionHeading>
       <ContactContent variants={itemVariants}>
-        <p>
-          I'm currently looking for new opportunities and my inbox is always open. Whether you have a question or just want to say hi, I'll do my best to get back to you!
-        </p>
+        <p>{contactInfo.introText || "I'm currently looking for new opportunities and my inbox is always open. Whether you have a question or just want to say hi, I'll do my best to get back to you!"}</p>
       </ContactContent>
 
-      <EmailLink href="mailto:your.email@example.com" variants={itemVariants}>
-        Say Hello
-      </EmailLink>
+      {contactInfo.email && (
+        <EmailLink href={`mailto:${contactInfo.email}`} variants={itemVariants}>
+          Say Hello
+        </EmailLink>
+      )}
 
-      <SocialLinksContainer variants={itemVariants}>
-        {/* Replace with your actual profile URLs */}
-        <a href="https://github.com/Muhammad-Nadeem-9911" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><FiGithub /></a>
-        <a href="https://linkedin.com/in/muhammad-nadeem-1169a4219" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><FiLinkedin /></a>
-        <a href="https://wa.me/+923404265067" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><FaWhatsapp /></a> {/* Use wa.me link */}
-        <a href="https://x.com/Ghumnaam72" target="_blank" rel="noopener noreferrer" aria-label="X"><FiTwitter /></a>
-        
-      </SocialLinksContainer>
+      {contactInfo.socialLinks && contactInfo.socialLinks.length > 0 && (
+        <SocialLinksContainer variants={itemVariants}>
+          {contactInfo.socialLinks.map((link) => (
+            <a
+              key={link.platform || link.url} // Use URL as part of key if platform might be missing
+              href={link.url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={link.label || link.platform}
+            >
+              {getSocialIcon(link.platform)}
+            </a>
+          ))}
+        </SocialLinksContainer>
+      )}
 
     </ContactSectionContainer>
   );

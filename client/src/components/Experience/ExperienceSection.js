@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import { getPublicExperiences } from '../../services/portfolioService'; // We will create this
 
 const ExperienceSectionContainer = styled(motion.section)`
   padding: 60px 20px;
@@ -86,37 +87,90 @@ const sectionVariants = {
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, x: -50 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  // Original hidden state:
+  // hidden: { opacity: 0, x: -50 },
+  // TEMPORARY TEST: Make the "hidden" state visible to check if items appear
+  hidden: { opacity: 1, x: 0 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } } // Visible state remains the same
 };
 
-const experienceData = [
-  {
-    role: 'Full Stack Developer',
-    company: 'Freelancer',
-    dates: 'March 2022 - Present',
-    description: [
-      'Developed and maintained web applications using React, Node.js, and Express.',
-      'Mostly Worked as a Freelancer Indipendently',
-      'Collaborated with cross-functional teams to define, design, and ship new features.',
-      'Implemented responsive UIs and ensured application scalability.',
-    ],
-  },
-  // Add more experiences (work, education) here
-];
+// const experienceData = [
+//   {
+//     role: 'Full Stack Developer',
+//     company: 'Freelancer',
+//     dates: 'March 2022 - Present',
+//     description: [
+//       'Developed and maintained web applications using React, Node.js, and Express.',
+//       'Mostly Worked as a Freelancer Indipendently',
+//       'Collaborated with cross-functional teams to define, design, and ship new features.',
+//       'Implemented responsive UIs and ensured application scalability.',
+//     ],
+//   },
+//   // Add more experiences (work, education) here
+// ];
 
 const ExperienceSection = () => {
+  const [experiences, setExperiences] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchExperiences = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getPublicExperiences();
+        setExperiences(data || []); // Ensure experiences is an array
+      } catch (err) {
+        setError(err.message || 'Could not load experiences.');
+        console.error("Failed to fetch experiences:", err);
+        // Optionally, you could set fallback static data here if the API fails
+        // setExperiences(staticExperienceData); 
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExperiences();
+  }, []);
+
+  if (loading) {
+    return (
+      <ExperienceSectionContainer id="experience">
+        <SectionHeading>Loading Journey...</SectionHeading>
+      </ExperienceSectionContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <ExperienceSectionContainer id="experience">
+        <SectionHeading>My Journey</SectionHeading>
+        <p style={{ textAlign: 'center', color: 'red' }}>Error: {error}</p>
+      </ExperienceSectionContainer>
+    );
+  }
+
+  if (!experiences.length && !loading) { // Check after loading is complete
+    return (
+      <ExperienceSectionContainer id="experience">
+        <SectionHeading>My Journey</SectionHeading>
+        <p style={{ textAlign: 'center' }}>No experiences to display at the moment.</p>
+      </ExperienceSectionContainer>
+    );
+  }
+
   return (
     <ExperienceSectionContainer id="experience" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}>
       <SectionHeading variants={itemVariants}>My Journey</SectionHeading>
       <ExperienceList>
-        {experienceData.map((exp, index) => (
-          <ExperienceItem key={index} variants={itemVariants}>
-            <h3>{exp.role}</h3>
+        {experiences.map((exp, index) => (
+          <ExperienceItem key={exp._id || index} variants={itemVariants}> {/* Use _id from MongoDB if available */}
+            <h3>{exp.role || exp.title}</h3> {/* Adjust field names based on your Experience model */}
             <h4>{exp.company}</h4>
-            <p className="dates">{exp.dates}</p>
+            <p className="dates">{exp.dates || `${new Date(exp.startDate).toLocaleDateString()} - ${exp.endDate ? new Date(exp.endDate).toLocaleDateString() : 'Present'}`}</p>
             <ul>
-              {exp.description.map((point, i) => (
+              {(exp.description || exp.responsibilities || []).map((point, i) => (
                 <li key={i}>{point}</li>
               ))}
             </ul>

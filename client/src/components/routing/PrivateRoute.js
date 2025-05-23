@@ -1,11 +1,14 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { isLoggedIn } from '../../services/authService';
 
-const PrivateRoute = ({ element }) => {
-  // If authorized, return the element (the component for the protected route)
-  // Otherwise, return element that will navigate to login page
-  return isLoggedIn() ? element : <Navigate to="/admin/login" replace />;
+const PrivateRoute = ({ children }) => {
+  const isAdminAuthenticated = !!localStorage.getItem('authToken'); // Changed to 'authToken'
+
+  if (!isAdminAuthenticated) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return children; // This will render <AdminLayout /> in your App.js setup
 };
 
 export default PrivateRoute;

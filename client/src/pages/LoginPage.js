@@ -68,17 +68,35 @@ const LoginForm = styled.form`
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(''); // Add error state for displaying messages
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(''); // Clear previous errors
     try {
-      await loginUser(username, password);
-      // loginUser service will store the token
-      navigate('/admin/projects'); // Redirect to admin dashboard on success
-    } catch (error) {
-      // The authService should ideally handle console logging the specific error
-      alert('Login failed. Please check your credentials.'); // Basic error feedback
+      console.log('[LoginPage] handleSubmit: Calling loginUser...');
+      // Assuming loginUser returns some data on success, like the user object or token
+      const response = await loginUser(username, password);
+      console.log('[LoginPage] loginUser successful, response:', response);
+
+      // loginUser in authService is responsible for setting the token.
+      // We verify it here before navigating.
+      if (localStorage.getItem('authToken')) {
+        console.log('[LoginPage] Token found, navigating to /admin/projects...');
+        navigate('/admin/projects'); // Redirect to admin dashboard on success
+        // It's important that no setError calls happen after a successful navigate intent
+        // if the login was truly successful and token is set.
+      } else {
+        console.error('[LoginPage] Login seemed successful but no token was stored. Check authService.');
+        setError('Login completed but authentication failed. Please contact support.');
+      }
+    } catch (err) {
+      console.error('Login attempt failed:', err); // Log the full error for debugging
+      // Try to get a more specific message from the error object
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Login failed. Please check your credentials.';
+      setError(errorMessage); // Set error state to display to user
+      // alert(errorMessage); // Or use alert if you prefer for now
     }
   };
 
@@ -106,6 +124,7 @@ const LoginPage = () => {
             required
           />
         </div>
+        {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
         <button type="submit">Login</button>
       </LoginForm>
     </LoginPageContainer>
