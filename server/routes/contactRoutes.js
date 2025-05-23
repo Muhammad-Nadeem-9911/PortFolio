@@ -3,8 +3,8 @@ const router = express.Router();
 const { 
 // Import all necessary controller functions
   getPublicContactInfo,
-  getAdminContactInfo,    // Assuming getContactInfo was meant for admin
-  updateAdminContactInfo  // Assuming updateContactInfo was meant for admin
+ getAdminContactInfo,
+ updateAdminContactInfo,
 
  } = require('../controllers/contactController');
 const { protect } = require('../middleware/authMiddleware');
@@ -20,6 +20,6 @@ router.route('/').get(getPublicContactInfo);
 // so these routes will be /api/admin/contact-info/admin
 router.route('/admin')
   .get(protect, getAdminContactInfo)
-  .put(protect, updateAdminContactInfo);
+  .put(protect, updateAdminContactInfo); // This will handle updates, including social links
 
 module.exports = router;

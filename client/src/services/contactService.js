@@ -6,7 +6,8 @@ import api from './api'; // Assuming you have an api.js for axios instance with 
  */
 export const getAdminContactInfo = async () => {
   try {
-    const response = await api.get('/admin/contact-info');
+    // Path should match backend: /api/admin/contact-info/admin
+    const response = await api.get('/admin/contact-info/admin');
     return response.data;
   } catch (error) {
     console.error('Error fetching contact information:', error.response || error.message);
@@ -27,7 +28,8 @@ export const getAdminContactInfo = async () => {
  */
 export const updateAdminContactInfo = async (contactData) => {
   try {
-    const response = await api.put('/admin/contact-info', contactData);
+    // Path should match backend: /api/admin/contact-info/admin
+    const response = await api.put('/admin/contact-info/admin', contactData);
     return response.data;
   } catch (error) {
     console.error('Error updating contact information:', error.response || error.message);

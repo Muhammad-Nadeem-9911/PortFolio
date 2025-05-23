@@ -5,28 +5,10 @@ const asyncHandler = require('express-async-handler'); // Or your preferred asyn
 // @route   GET /api/admin/contact-info (or /api/admin/contact-info/admin depending on route setup)
 // @access  Private/Admin
 const getAdminContactInfo = asyncHandler(async (req, res) => {
-  let contactInfo = await ContactInfo.findOne(); // Find the single contact info document
-
-  if (!contactInfo) {
-    // If no contact info exists, create a default one or return default values
-    // Option 1: Return default structure (frontend will handle empty state)
-    // return res.status(200).json({
-    //   introText: "Default intro text...",
-    //   email: "default@example.com",
-    //   socialLinks: []
-    // });
-
-    // Option 2: Create and save a default document then return it (better for consistency)
-    contactInfo = await ContactInfo.create({
-      email: 'your.email@example.com', // Provide a sensible default
-      introText: 'Feel free to reach out!',
-      socialLinks: [
-        { platform: 'GitHub', url: 'https://github.com/yourusername', label: 'GitHub' },
-        { platform: 'LinkedIn', url: 'https://linkedin.com/in/yourusername', label: 'LinkedIn' },
-      ]
-    });
-  }
-
+  // Use the static helper to find or create the document
+  // This ensures that if no document exists, one is created with schema defaults
+  // or specific defaults defined in the findOneOrCreate method.
+  const contactInfo = await ContactInfo.findOneOrCreate();
   res.status(200).json(contactInfo);
 });
 
@@ -34,6 +16,7 @@ const getAdminContactInfo = asyncHandler(async (req, res) => {
 // @route   PUT /api/admin/contact-info (or /api/admin/contact-info/admin depending on route setup)
 // @access  Private/Admin
 const updateAdminContactInfo = asyncHandler(async (req, res) => {
+  const contactInfo = await ContactInfo.findOneOrCreate(); // Ensure document exists
   const { introText, email, socialLinks } = req.body;
 
   // Validate input (basic example)
@@ -42,13 +25,20 @@ const updateAdminContactInfo = asyncHandler(async (req, res) => {
     throw new Error('Email is required');
   }
 
-  // Find the existing document or create a new one if it doesn't exist (upsert)
-  // The filter {} will match the first document if one exists.
-  const updatedContactInfo = await ContactInfo.findOneAndUpdate(
-    {}, // An empty filter will match the first document found or create one if upsert is true
-    { introText, email, socialLinks /*, lastUpdatedBy: req.user._id */ },
-    { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
-  );
+  // Update fields on the fetched/created document
+  if (introText !== undefined) contactInfo.introText = introText;
+  contactInfo.email = email; // Already validated that email is present
+
+  if (socialLinks && Array.isArray(socialLinks)) {
+    contactInfo.socialLinks = socialLinks.map(link => ({
+      platform: link.platform || '',
+      url: link.url || '',
+    })).filter(link => link.platform && link.url); // Basic validation for links
+  } else if (socialLinks === null || (Array.isArray(socialLinks) && socialLinks.length === 0)) {
+    contactInfo.socialLinks = []; // Allow clearing social links
+  }
+
+  const updatedContactInfo = await contactInfo.save();
 
   if (updatedContactInfo) {
     res.status(200).json(updatedContactInfo);
@@ -63,22 +53,11 @@ const updateAdminContactInfo = asyncHandler(async (req, res) => {
 // @route   GET /api/contact-info
 // @access  Public
 const getPublicContactInfo = asyncHandler(async (req, res) => {
-  let contactInfo = await ContactInfo.findOne().select('-createdAt -updatedAt -__v'); // Exclude audit fields
-
-  if (!contactInfo) {
-    // If no contact info exists, create and return a default one.
-    // This ensures the frontend always gets a consistent structure.
-    contactInfo = await ContactInfo.create({
-      email: 'contact@example.com', // Provide a sensible default
-      introText: 'Feel free to reach out!',
-      socialLinks: [
-        { platform: 'GitHub', url: 'https://github.com', label: 'GitHub' },
-      ]
-    });
-    // Re-fetch to apply select and ensure consistency for the response
-    contactInfo = await ContactInfo.findById(contactInfo._id).select('-createdAt -updatedAt -__v');
-  }
-  res.status(200).json(contactInfo);
+  // Use the static helper to find or create the document
+  const contactInfo = await ContactInfo.findOneOrCreate();
+  // Select fields to exclude for public response
+  const publicData = await ContactInfo.findById(contactInfo._id).select('-createdAt -updatedAt -__v');
+  res.status(200).json(publicData);
 });
 
 module.exports = {

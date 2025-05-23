@@ -141,6 +141,7 @@ const MobileNavLinks = styled(motion.div)`
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [resumeUrl, setResumeUrl] = useState('/YourName_Resume.pdf'); // Default/fallback resume URL
+  const [logoName, setLogoName] = useState('M~Nadeem'); // Default logo name
 
   useEffect(() => {
     const fetchResumeUrl = async () => {
@@ -165,6 +166,9 @@ const Navbar = () => {
           }
           console.log("Navbar: Processed resumeUrl for href:", url);
           setResumeUrl(url);
+        }
+        if (data && data.name) { // Set the logo name
+          setLogoName(data.name);
         }
       } catch (error) {
         console.error("Navbar: Failed to fetch resume URL from about info:", error);
@@ -209,7 +213,7 @@ const Navbar = () => {
   return (
     <>
       <NavContainer initial={{ y: -100 }} animate={{ y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}>
-        <Logo href="#">M~Nadeem</Logo> {/* Or link to #hero */}
+        <Logo href="#">{logoName}</Logo> {/* Use dynamic logoName */}
         <NavLinksContainer>
           {renderNavLinks()}
         </NavLinksContainer>

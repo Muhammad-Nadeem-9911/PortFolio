@@ -52,4 +52,12 @@ const ContactInfoSchema = new mongoose.Schema({
 //   }
 // });
 
+// Helper static method to find or create the single ContactInfo document
+ContactInfoSchema.statics.findOneOrCreate = async function() {
+  let doc = await this.findOne();
+  if (!doc) {
+    doc = await this.create({}); // Creates a document with default values from the schema
+  }
+  return doc;
+};
 module.exports = mongoose.model('ContactInfo', ContactInfoSchema);
